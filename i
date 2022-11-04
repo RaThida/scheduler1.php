@@ -1,150 +1,156 @@
-<?php 
-$dstart = isset($_GET['dstart']) ? $_GET['dstart'] : date("Y-m-d", strtotime(date("Y-m-d")." -1 week"));
-$dend = isset($_GET['dend']) ? $_GET['dend'] : date("Y-m-d");
-$rid = isset($_GET['aid']) ? $_GET['aid'] : 0;
-?>
+<?php if($_settings->chk_flashdata('success')): ?>
+<script>
+	alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')
+</script>
+<?php endif;?>
+<style>
+#selectAll{
+	top:0
+}
+</style>
 <div class="card card-outline card-primary">
 	<div class="card-header">
-		<h3 class="card-title">Schedule Report</h3>
-		<div class="card-tools">
-			
-		</div>
+		<h3 class="card-title">Assembly Hall/Romm Schedules</h3>
+		<!-- <div class="card-tools">
+			<a href="?page=individual/manage_individual" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Create New</a>
+		</div> -->
 	</div>
 	<div class="card-body">
-		<div class="container-fluid">
-        <form action="" id="filter">
-            <div class="d-flex  h-100 d-flex align-items-end">
-                <div class="form-group col-3">
-                    <label for="start" class="control-label">Date Start</label>
-                    <input type="date" name="start" id="start" value="<?php echo $dstart ?>" class="form-control">
-                </div>
-                <div class="form-group col-3">
-                    <label for="end" class="control-label">Date End</label>
-                    <input type="date" name="end" id="end" value="<?php echo $dend ?>" class="form-control">
-                </div>
-                <div class="form-group col-3">
-                    <label for="aid" class="control-label">Room/Hall</label>
-                    <select class="custom-select select2" name="aid" id="aid">
-                        <option value="0" <?php echo $rid ==  0 ? "selected" : "" ?>>All</option>
-                        <?php 
-                        $aqry = $conn->query("SELECT * FROM `assembly_hall` order by room_name asc");
-                        while($row= $aqry->fetch_assoc()):
-                        ?>
-                        <option value="<?php echo $row['id'] ?>" <?php echo $rid ==  $row['id']  ? "selected" : "" ?>><?php echo $row['room_name'] ?></option>
-
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <div class="form-group col-3">
-                    <button class="btn btn-flat btn-primary"><span class="fas fa-filter"></span>  Filter</button>
-                    <button type="button" id="print_now" class="btn btn-flat btn-success"><span class="fas fa-print"></span>  Print</button>
-                </div>
-            </div>
-        </form>
-        <div class="container-fluid" id="print_out">
-			<table class="table table-bordered table-stripped" id="report-table">
-				<colgroup>
-					<col width="5%">
-					<col width="20%">
-					<col width="20%">
-					<col width="20%">
-					<col width="15%">
-					<col width="20%">
-				</colgroup>
-				<thead>
-					<tr>
-						<th class="text-center">#</th>
-						<th>Schedule</th>
-						<th>Hall/Room Name</th>
-						<th>Description</th>
-						<th>Reserved By</th>
-						<th>Remarks</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php 
-					$i = 1;
-                        $where = "";
-                        $rname = "";
-                        if($rid > 0){
-                            $where = " and a.id = '{$rid}'";
-                        }
-						$qry = $conn->query("SELECT s.*,a.room_name, a.description from `schedule_list` s inner join `assembly_hall` a on a.id = s.assembly_hall_id where ((date(datetime_start) BETWEEN '{$dstart}' and '{$dend}' ) OR (date(datetime_end) BETWEEN '{$dstart}' and '{$dend}' )) {$where} order by unix_timestamp(datetime_start) asc, unix_timestamp(datetime_end) asc ");
-						while($row = $qry->fetch_assoc()):
-                            if($rid > 0){
-                                $rname = $row['room_name'];
-                            }
-					?>
-						<tr>
-							<td class="text-center"><?php echo $i++; ?></td>
-							<td>
-                                <p class="m-0">
-                                    <small><b>Start:</b> <?php echo date("M d, Y h:i A",strtotime($row['datetime_start'])) ?></small><br>
-                                    <small><b>End:</b> <?php echo date("M d, Y h:i A",strtotime($row['datetime_end'])) ?></small>
-                                </p>
-                            </td>
-							<td ><?php echo $row['room_name'] ?></td>
-							<td ><?php echo $row['description'] ?></td>
-							<td ><?php echo ucwords($row['reserved_by']) ?></td>
-							<td ><?php echo $row['schedule_remarks'] ?></td>
-							</td>
-						</tr>
-					<?php endwhile; ?>
-				</tbody>
-			</table>
-		</div>
+        <div class="container-fluid">
+			<div class="row">
+				<div class="col-md-8">
+					<div id="calendar"></div>
+				</div>
+				<div class="col-md-4">
+					<div class="callout border-0">
+						<h5><b>New Schedule</b></h5>
+						<hr>
+						<form action="" id="add_sched">
+							<input type="hidden" name="id" value="">
+							<div class="form-group">
+								<label for="assembly_hall_id" class="control-label">Assembly Hall/Room</label>
+								<select name="assembly_hall_id" id="assembly_hall_id" class="custom-select select2" >
+									<option value=""></option>
+									<?php 
+									$hall_qry = $conn->query("SELECT * FROM `assembly_hall` where status =1  order by `room_name` asc");
+									while($row = $hall_qry->fetch_assoc()):
+									?>
+										<option value="<?php echo $row['id'] ?>"><?php echo $row['room_name'] ?></option>
+									<?php endwhile; ?>
+								</select>
+							</div>
+							<div class="form-group">
+								<label for="reserved_by" class="control-label">Reserved By:</label>
+								<input type="text" class="form-control" name="reserved_by" id="reserved_by" required>
+							</div>
+							<div class="form-group">
+								<label for="datetime_start" class="control-label">DateTime Start:</label>
+								<input type="datetime-local" class="form-control" name="datetime_start" id="datetime_start">
+							</div>
+							<div class="form-group">
+								<label for="datetime_end" class="control-label">DateTime End:</label>
+								<input type="datetime-local" class="form-control" name="datetime_end" id="datetime_end">
+							</div>
+							<div class="form-group">
+								<label for="schedule_remarks" class="control-label">Remarks:</label>
+								<textarea rows="3" class="form-control" name="schedule_remarks" id="schedule_remarks"></textarea>
+							</div>
+							<div class="form-group d-flex w-100 justify-content-end">
+								<button class="btn btn-flat btn-primary btn-sm mr-2">Save</button>
+								<button class="btn btn-flat btn-light btn-sm" type="reset">Reset</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
+<?php
+$sched_qry = $conn->query("SELECT s.*,a.room_name FROM `schedule_list` s inner join assembly_hall a on a.id = s.assembly_hall_id ");
+$sched_data = array();
+while($row=$sched_qry->fetch_assoc()):
+	$sched_data[]=$row;
+endwhile;
+$sched = json_encode($sched_data);
+?>
 <script>
-    window.DT_INIT = function(){
-        $('#report-table').dataTable({
-            "lengthMenu":[ [ 50, 100, -1], [ 50, 100, "All"]],
-            "oreder": [[0,"asc"]]
-        })
-    }
-    $(function(){
-        $('#filter').submit(function(e){
-            e.preventDefault()
-            var dstart = $('[name="start"]').val()
-            var dend = $('[name="end"]').val()
-            var aid = $('[name="aid"]').val()
-            location.href = "?page=report&dstart="+dstart+"&dend="+dend+"&aid="+aid;
-        })
-        $('.select2').select2()
-        DT_INIT()
-        // console.log($.fn.DataTable.isDataTable( '#report-table' ))
-        $('#print_now').click(function(){
-            start_loader()
-            if($.fn.DataTable.isDataTable( '#report-table' ) == true){
-                $('#report-table').DataTable().destroy()
-            }
-            var _h = $('head').clone()
-            var _p = $('#print_out').clone()
-            var _el = $('<div>')
-                _el.append(_h)
-                _el.append("<style>html, body, .wrapper {  min-height: inherit !important; }</style>")
-                _el.append("<h3 class='text-center'><?php echo $_settings->info('name') ?></h3>")
-                _el.append("<h4 class='text-center'>Schedule Report</h4>")
-                if('<?php echo $dstart ?>' == '<?php echo $dend ?>')
-                    _el.append("<p class='text-center m-0'>Date: <?php echo date("F d, Y", strtotime($dstart)) ?></p>");
-                else
-                    _el.append("<p class='text-center m-0'>Date: <?php echo date("F d, Y", strtotime($dstart)) ?> - <?php echo date("F d, Y", strtotime($dend)) ?></p>");
-                if('<?php echo $rid ?>' > 0)
-                _el.append("<p class='text-center m-0'>For: <?php echo $rname ?></p>");
-                _el.append("<hr/>")
-                _el.append(_p)
-            var nw = window.open("","_blank","width=5000,heigth=5000,top=0,left=0")
-                nw.document.write(_el.html())
-                nw.document.close()
-                setTimeout(() => {
-                nw.print()
-                    setTimeout(() => {
-                        nw.close()
-                        DT_INIT()
-                        end_loader()
-                    }, 200);
-                }, 500);
-        })
-    })
+	var scheds = $.parseJSON('<?php echo $sched ?>');
+	$(function(){
+		$('#add_sched').submit(function(e){
+			e.preventDefault()
+			start_loader()
+			$('#add_sched .err-msg').remove()
+
+			$.ajax({
+				url:_base_url_+'classes/Master.php?f=save_schedule',
+				method:"POST",
+				data: $(this).serialize(),
+				dataType:"json",
+				error:err=>{
+					console.log(err)
+					end_loader()
+					alert_toast("An error occured","error");
+				},
+				success:function(resp){
+					if(resp.status == 'success'){
+						location.reload()
+					}else if(resp.status == 'failed' && !!resp.err_msg){
+						var el = $('<div class="err-msg alert alert-danger mb-1">')
+							el.text(resp.err_msg)
+						$('#add_sched').prepend(el)
+							el.show('slow')
+					}else{
+						console.log(resp)
+						alert_toast("An error occured","error");
+					}
+					end_loader();
+				}
+			})
+		})
+		$('.select2').select2({placeholder:"Please Select Hall/Room here"})
+		var Calendar = FullCalendar.Calendar;
+        var date = new Date()
+        var d    = date.getDate(),
+            m    = date.getMonth(),
+            y    = date.getFullYear()
+		
+		var calendarEl = document.getElementById('calendar');
+		var calendar = new Calendar(calendarEl, {
+                        headerToolbar: {
+                            left  : 'prev,next today',
+                            center: 'title',
+                            right : 'dayGridMonth,timeGridWeek,timeGridDay'
+                        },
+                        themeSystem: 'bootstrap',
+                        //Random default events
+                        events:function(event,successCallback){
+                            var days = moment(event.end).diff(moment(event.start),'days')
+                            var events = []
+							Object.keys(scheds).map(k=>{
+								events.push({
+									title          : scheds[k].room_name,
+									start          : moment(scheds[k].datetime_start).format("YYYY-MM-DD HH:mm"),
+									end          : moment(scheds[k].datetime_end).format("YYYY-MM-DD HH:mm"),
+									
+									backgroundColor: 'var(--success)', 
+									borderColor    : 'var(--primary)',
+									'data-id'      : scheds[k].id
+								})
+							})
+							console.log(events)
+                            successCallback(events)
+                        },
+                        eventClick:function(info){
+							sched_id = info.event.extendedProps['data-id']
+							console.log(sched_id)
+                            uni_modal("Schedule Details","schedules/view_details.php?id="+sched_id)
+                        },
+                        editable  : true,
+                        selectable: true,
+                        
+				});
+
+	calendar.render();
+	})
 </script>

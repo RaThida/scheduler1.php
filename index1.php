@@ -1,3 +1,7 @@
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
 <?php if($_settings->chk_flashdata('success')): ?>
 <script>
 	alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')
@@ -8,18 +12,9 @@
 	top:0
 }
 </style>
-<div class="card card-outline card-primary">
-	<div class="card-header">
-		<h3 class="card-title">Assembly Hall/Romm Schedules</h3>
-		
-		<?php 
-		 //if(isset($_SESSION['myDate']))
-		// {
-			//echo $_SESSION['myDate'];//Displaying Session Message
-			// unset ($_SESSION['myDate']);//Removing Session Message
-		 //}
-	 	?>
-		
+<div class="card card-outline card-primary clear-fix">
+	<!--<div class="card-header">
+		<h3 class="card-title">Assembly Hall/Romm Schedules</h3>-->
 		<!-- <div class="card-tools">
 			<a href="?page=individual/manage_individual" class="btn btn-flat btn-primary"><span class="fas fa-plus"></span>  Create New</a>
 		</div> -->
@@ -61,16 +56,16 @@
 								<input type="datetime-local" class="form-control" name="datetime_end" id="datetime_end">
 							</div>
 							<div class="form-group">
-								<label for="email" class="control-label">Email:</label>
-								<input type="text" class="form-control" name="email" id="email" required>
-							</div>
+        <label for="email" class="control-label">Email:</label>
+        <input type="text" class="form-control" name="email" id="email" required>
+       </div>
 							<div class="form-group">
 								<label for="schedule_remarks" class="control-label">Remarks:</label>
 								<textarea rows="3" class="form-control" name="schedule_remarks" id="schedule_remarks"></textarea>
 							</div>
 							<div class="form-group d-flex w-100 justify-content-end">
-								<button class="btn btn-flat btn-primary btn-sm mr-2">Save</button>
-								<button class="btn btn-flat btn-light btn-sm" type="reset">Reset</button>
+							<a class="btn btn-flat btn-primary " href="login1.php">Save</a>
+								<button class="btn btn-flat btn-light btn-sm" data-toggle="modal" data-target="#completeModal" type="reset">Reset</button>
 							</div>
 						</form>
 					</div>
@@ -79,7 +74,12 @@
 		</div>
 	</div>
 </div>
+
+</form>
+
+
 <?php
+/*Get data from database */
 $sched_qry = $conn->query("SELECT s.*,a.room_name FROM `schedule_list` s inner join assembly_hall a on a.id = s.assembly_hall_id ");
 $sched_data = array();
 while($row=$sched_qry->fetch_assoc()):
@@ -145,7 +145,6 @@ $sched = json_encode($sched_data);
 									title          : scheds[k].room_name,
 									start          : moment(scheds[k].datetime_start).format("YYYY-MM-DD HH:mm"),
 									end          : moment(scheds[k].datetime_end).format("YYYY-MM-DD HH:mm"),
-									email  		 : moment(scheds[k].email),
 									backgroundColor: 'var(--success)', 
 									borderColor    : 'var(--primary)',
 									'data-id'      : scheds[k].id
