@@ -81,13 +81,17 @@ Class Master extends DBConnection {
 				$data.=" {$k} = '{$v}'";
 			}
 		}
-		if(strtotime($datetime_end) < strtotime($datetime_start)){
+		$start_date = date_format(date_create($datetime_start),"Y/m/d"); //start  date $_start_date
+        $current_date=date("Y/m/d"); 
+        //echo strtotime($current_date)  ."<br>";  
+        //echo strtotime(date_format($start_date,"Y/m/d")); 
+		if((strtotime($start_date) < strtotime($current_date)) || (strtotime($datetime_end) < strtotime($datetime_start))){
 			$resp['status'] = 'failed';
 			$resp['err_msg'] = "Date and Time Schedule is Invalid.";
 		}else{
 			$d_start = strtotime($datetime_start);
 			$d_end = strtotime($datetime_end);
-			$chk = $this->conn->query("SELECT * FROM `schedule_list` where (('{$d_start}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end)) or ('{$d_end}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end))) ".(($id > 0) ? " and id !='{$id}' " : ""))->num_rows;
+			$chk = $this->conn->query("SELECT * FROM `schedule_list` where `assembly_hall_id`=$assembly_hall_id AND((('{$d_start}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end)) or ('{$d_end}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end)))) ".(($id > 0) ? " and id !='{$id}' " : ""))->num_rows;
 			if($chk > 0){
 				$resp['status'] = 'failed';
 				$resp['err_msg'] = "The schedule is conflict with other schedules.";

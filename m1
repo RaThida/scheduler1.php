@@ -87,7 +87,7 @@ Class Master extends DBConnection {
 		}else{
 			$d_start = strtotime($datetime_start);
 			$d_end = strtotime($datetime_end);
-			$chk = $this->conn->query("SELECT * FROM `schedule_list` where (('{$d_start}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end)) or ('{$d_end}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end))) ".(($id > 0) ? " and id !='{$id}' " : ""))->num_rows;
+			$chk = $this->conn->query("SELECT * FROM `schedule_list` where `assembly_hall_id`=$assembly_hall_id AND((('{$d_start}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end)) or ('{$d_end}' Between unix_timestamp(datetime_start) and unix_timestamp(datetime_end)))) ".(($id > 0) ? " and id !='{$id}' " : ""))->num_rows;
 			if($chk > 0){
 				$resp['status'] = 'failed';
 				$resp['err_msg'] = "The schedule is conflict with other schedules.";
