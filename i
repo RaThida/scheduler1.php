@@ -26,8 +26,6 @@
 						<th>#</th>
 						<th>Name</th>
 						<th>Location</th>
-						<th>Floor</th>
-						<th>Description</th>
 						<th>Status</th>
 						<th>Action</th>
 					</tr>
@@ -42,8 +40,6 @@
 							<td class="text-center"><?php echo $i++; ?></td>
 							<td><?php echo $row['room_name'] ?></td>
 							<td ><?php echo $row['location'] ?></td>
-							<td ><?php echo $row['floor'] ?></td>
-							<td ><?php echo $row['description'] ?></td>
 							<td class="text-center">
 								<?php 
 								switch($row['status']):
